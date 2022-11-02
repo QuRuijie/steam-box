@@ -3,10 +3,10 @@ name: Update gist with Steam Playtime Recent
 on:
   push:
     branches: 
-      - master
+      - recent
   pull_request:
     branches:
-      - master
+      - recent
   schedule:
     - cron: "0 * * * *"
     

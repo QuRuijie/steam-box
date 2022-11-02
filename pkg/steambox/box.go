@@ -21,6 +21,8 @@ type Box struct {
 	github *github.Client
 }
 
+const MAX = 10
+
 // NewBox creates a new Box with the given API key.
 func NewBox(apikey string, ghUsername, ghToken string) *Box {
 	box := &Box{}
@@ -74,7 +76,7 @@ func (b *Box) GetPlayTime(ctx context.Context, steamID uint64, multiLined bool, 
 	})
 
 	for _, game := range gameRet.Games {
-		if max >= 5 {
+		if max >= MAX {
 			break
 		}
 
@@ -84,11 +86,11 @@ func (b *Box) GetPlayTime(ctx context.Context, steamID uint64, multiLined bool, 
 		if multiLined {
 			gameLine := getNameEmoji(game.Appid, game.Name)
 			lines = append(lines, gameLine)
-			hoursLine := fmt.Sprintf("						    🕘 %d hrs %d mins", hours, mins)
+			hoursLine := fmt.Sprintf("						    🕘 %d 小时 %d 分钟", hours, mins)
 			lines = append(lines, hoursLine)
 		} else {
 			line := pad(getNameEmoji(game.Appid, game.Name), " ", 35) + " " +
-				pad(fmt.Sprintf("🕘 %d hrs %d mins", hours, mins), "", 16)
+				pad(fmt.Sprintf("🕘 %d 小时 %d 分钟", hours, mins), "", 16)
 			lines = append(lines, line)
 		}
 		max++
@@ -100,7 +102,7 @@ func (b *Box) GetPlayTime(ctx context.Context, steamID uint64, multiLined bool, 
 func (b *Box) GetRecentGames(ctx context.Context, steamID uint64, multiLined bool) ([]string, error) {
 	params := &steam.GetRecentlyPlayedGamesParams{
 		SteamID: steamID,
-		Count:   5,
+		Count: uint32(MAX),
 	}
 
 	gameRet, err := b.steam.IPlayerService.GetRecentlyPlayedGames(ctx, params)
@@ -111,7 +113,7 @@ func (b *Box) GetRecentGames(ctx context.Context, steamID uint64, multiLined boo
 	var max = 0
 
 	for _, game := range gameRet.Games {
-		if max >= 5 {
+		if max >= MAX {
 			break
 		}
 
@@ -125,11 +127,11 @@ func (b *Box) GetRecentGames(ctx context.Context, steamID uint64, multiLined boo
 		if multiLined {
 			gameLine := getNameEmoji(game.Appid, game.Name)
 			lines = append(lines, gameLine)
-			hoursLine := fmt.Sprintf("						    🕘 %d hrs %d mins", hours, mins)
+			hoursLine := fmt.Sprintf("						    🕘 %d 小时 %d 分钟", hours, mins)
 			lines = append(lines, hoursLine)
 		} else {
 			line := pad(getNameEmoji(game.Appid, game.Name), " ", 35) + " " +
-				pad(fmt.Sprintf("🕘 %d hrs %d mins", hours, mins), "", 16)
+				pad(fmt.Sprintf("🕘 %d 小时 %d 分钟", hours, mins), "", 16)
 			lines = append(lines, line)
 		}
 		max++

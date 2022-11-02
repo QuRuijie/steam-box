@@ -31,7 +31,7 @@ func main() {
 	ghUsername := os.Getenv("GH_USER")
 	gistID := os.Getenv("GIST_ID")
 
-	steamOption := "ALLTIME" // options for types of games to list: RECENT (recently played games), ALLTIME <default> (playtime of games in descending order)
+	steamOption := "RECENT" // options for types of games to list: RECENT (recently played games), ALLTIME <default> (playtime of games in descending order)
 	if os.Getenv("STEAM_OPTION") != "" {
 		steamOption = os.Getenv("STEAM_OPTION")
 	}
@@ -67,13 +67,13 @@ func main() {
 	)
 
 	if steamOption == "ALLTIME" {
-		filename = "🎮 Steam playtime leaderboard"
+		filename = "Steam日常🎮"
 		lines, err = box.GetPlayTime(ctx, steamID, multiLined, appIDList...)
 		if err != nil {
 			panic("GetPlayTime err:" + err.Error())
 		}
 	} else if steamOption == "RECENT" {
-		filename = "🎮 Recently played Steam games"
+		filename = "Steam日常🎮"
 		lines, err = box.GetRecentGames(ctx, steamID, multiLined)
 		if err != nil {
 			panic("GetRecentGames err:" + err.Error())

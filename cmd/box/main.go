@@ -12,38 +12,22 @@ import (
 	"github.com/google/go-github/github"
 )
 
+
+var (
+	filename string
+	lines []string
+	err error
+)
+
 func main() {
-	var err error
-	steamAPIKey := os.Getenv("STEAM_API_KEY")
-	steamID, _ := strconv.ParseUint(os.Getenv("STEAM_ID"), 10, 64)
-	appIDs := os.Getenv("APP_ID")
-	appIDList := make([]uint32, 0)
-
-	for _, appID := range strings.Split(appIDs, ",") {
-		appid, err := strconv.ParseUint(appID, 10, 32)
-		if err != nil {
-			continue
-		}
-		appIDList = append(appIDList, uint32(appid))
-	}
-
-	ghToken := os.Getenv("GH_TOKEN")
-	ghUsername := os.Getenv("GH_USER")
+	ctx := context.Background()
 	gistID := os.Getenv("GIST_ID")
+	gistIDRecent := os.Getenv("GIST_ID_RECENT")
 
-	steamOption := "ALLTIME" // options for types of games to list: RECENT (recently played games), ALLTIME <default> (playtime of games in descending order)
-	if os.Getenv("STEAM_OPTION") != "" {
-		steamOption = os.Getenv("STEAM_OPTION")
-	}
+	steamID, _ := strconv.ParseUint(os.Getenv("STEAM_ID"), 10, 64)
+	box := GetBox()
+	appIDList := GetAppList()
 
-	multiLined := false // boolean for whether hours should have their own line - YES = true, NO = false
-	if os.Getenv("MULTILINE") != "" {
-		lineOption := os.Getenv("MULTILINE")
-		if lineOption == "YES" {
-			multiLined = true
-		}
-	}
-	
 	updateOption := os.Getenv("UPDATE_OPTION") // options for update: GIST (Gist only), MARKDOWN (README only), GIST_AND_MARKDOWN (Gist and README)
 	markdownFile := os.Getenv("MARKDOWN_FILE") // the markdown filename (e.g. MYFILE.md)
 
@@ -57,31 +41,39 @@ func main() {
 		updateGist = true
 	}
 
-	box := steambox.NewBox(steamAPIKey, ghUsername, ghToken)
-
-	ctx := context.Background()
-
-	var (
-		filename string
-		lines []string
-	)
-
-	if steamOption == "ALLTIME" {
-		filename = "🎮 Steam Game Time"
-		lines, err = box.GetPlayTime(ctx, steamID, multiLined, appIDList...)
-		if err != nil {
-			panic("GetPlayTime err:" + err.Error())
-		}
-	} else if steamOption == "RECENT" {
-		filename = "🎮 Steam Game Recent"
-		lines, err = box.GetRecentGames(ctx, steamID, multiLined)
-		if err != nil {
-			panic("GetRecentGames err:" + err.Error())
-		}
+	// 更新总游戏时间
+	filename = "🎮 Steam Game Time"
+	lines, err = box.GetPlayTime(ctx, steamID, false, appIDList...)
+	if err != nil {
+		panic("GetPlayTime err:" + err.Error())
 	}
 
 	if updateGist {
 		gist, err := box.GetGist(ctx, gistID)
+		if err != nil {
+			panic("GetGist err:" + err.Error())
+		}
+
+		f := gist.Files[github.GistFilename(filename)]
+
+		f.Content = github.String(strings.Join(lines, "\n"))
+		gist.Files[github.GistFilename(filename)] = f
+
+		err = box.UpdateGist(ctx, gistID, gist)
+		if err != nil {
+			panic("UpdateGist err:" + err.Error())
+		}
+	}
+
+	// 更新近期游戏时间
+	filename = "🎮 Steam Game Recent"
+	lines, err = box.GetRecentGames(ctx, steamID, false)
+	if err != nil {
+		panic("GetRecentGames err:" + err.Error())
+	}
+
+	if updateGist {
+		gist, err := box.GetGist(ctx, gistIDRecent)
 		if err != nil {
 			panic("GetGist err:" + err.Error())
 		}
@@ -112,4 +104,25 @@ func main() {
 		}
 		fmt.Println("updating markdown successfully on ", markdownFile)
 	}
+}
+
+func GetAppList() []uint32 {
+	appIDs := os.Getenv("APP_ID")
+	appIDList := make([]uint32, 0)
+
+	for _, appID := range strings.Split(appIDs, ",") {
+		appid, err := strconv.ParseUint(appID, 10, 32)
+		if err != nil {
+			continue
+		}
+		appIDList = append(appIDList, uint32(appid))
+	}
+	return appIDList
+}
+
+func GetBox() *steambox.Box{
+	ghToken := os.Getenv("GH_TOKEN")
+	ghUsername := os.Getenv("GH_USER")
+	steamAPIKey := os.Getenv("STEAM_API_KEY")
+	return steambox.NewBox(steamAPIKey, ghUsername, ghToken)
 }

@@ -12,12 +12,11 @@ import (
 	"github.com/google/go-github/github"
 )
 
-
 var (
 	filename string
-	lines1 []string
-	lines2 []string
-	err error
+	lines1   []string
+	lines2   []string
+	err      error
 )
 
 func main() {
@@ -27,6 +26,8 @@ func main() {
 	gistIDRecent := os.Getenv("GIST_ID_RECENT")
 	steamID, _ := strconv.ParseUint(os.Getenv("STEAM_ID"), 10, 64)
 	box := GetBox()
+
+	fmt.Println(gistID, gistIDRecent)
 
 	updateOption := os.Getenv("UPDATE_OPTION") // options for update: GIST (Gist only), MARKDOWN (README only), GIST_AND_MARKDOWN (Gist and README)
 	markdownFile := os.Getenv("MARKDOWN_FILE") // the markdown filename (e.g. MYFILE.md)
@@ -119,7 +120,7 @@ func GetAppList() []uint32 {
 	return appIDList
 }
 
-func GetBox() *steambox.Box{
+func GetBox() *steambox.Box {
 	ghToken := os.Getenv("GH_TOKEN")
 	ghUsername := os.Getenv("GH_USER")
 	steamAPIKey := os.Getenv("STEAM_API_KEY")

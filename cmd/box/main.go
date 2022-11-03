@@ -15,22 +15,21 @@ import (
 
 var (
 	filename string
-	lines []string
+	lines1 []string
+	lines2 []string
 	err error
 )
 
 func main() {
+	appIDList := GetAppList()
 	ctx := context.Background()
 	gistID := os.Getenv("GIST_ID")
 	gistIDRecent := os.Getenv("GIST_ID_RECENT")
-
 	steamID, _ := strconv.ParseUint(os.Getenv("STEAM_ID"), 10, 64)
 	box := GetBox()
-	appIDList := GetAppList()
 
 	updateOption := os.Getenv("UPDATE_OPTION") // options for update: GIST (Gist only), MARKDOWN (README only), GIST_AND_MARKDOWN (Gist and README)
 	markdownFile := os.Getenv("MARKDOWN_FILE") // the markdown filename (e.g. MYFILE.md)
-
 	var updateGist, updateMarkdown bool
 	if updateOption == "MARKDOWN" {
 		updateMarkdown = true
@@ -43,7 +42,7 @@ func main() {
 
 	// 更新总游戏时间
 	filename = "🎮 Steam Game Time"
-	lines, err = box.GetPlayTime(ctx, steamID, false, appIDList...)
+	lines1, err = box.GetPlayTime(ctx, steamID, false, appIDList...)
 	if err != nil {
 		panic("GetPlayTime err:" + err.Error())
 	}
@@ -56,7 +55,7 @@ func main() {
 
 		f := gist.Files[github.GistFilename(filename)]
 
-		f.Content = github.String(strings.Join(lines, "\n"))
+		f.Content = github.String(strings.Join(lines1, "\n"))
 		gist.Files[github.GistFilename(filename)] = f
 
 		err = box.UpdateGist(ctx, gistID, gist)
@@ -67,7 +66,7 @@ func main() {
 
 	// 更新近期游戏时间
 	filename = "🎮 Steam Game Recent"
-	lines, err = box.GetRecentGames(ctx, steamID, false)
+	lines2, err = box.GetRecentGames(ctx, steamID, false)
 	if err != nil {
 		panic("GetRecentGames err:" + err.Error())
 	}
@@ -80,10 +79,10 @@ func main() {
 
 		f := gist.Files[github.GistFilename(filename)]
 
-		f.Content = github.String(strings.Join(lines, "\n"))
+		f.Content = github.String(strings.Join(lines2, "\n"))
 		gist.Files[github.GistFilename(filename)] = f
 
-		err = box.UpdateGist(ctx, gistID, gist)
+		err = box.UpdateGist(ctx, gistIDRecent, gist)
 		if err != nil {
 			panic("UpdateGist err:" + err.Error())
 		}
@@ -96,7 +95,7 @@ func main() {
 		}
 
 		content := bytes.NewBuffer(nil)
-		content.WriteString(strings.Join(lines, "\n"))
+		content.WriteString(strings.Join(lines1, "\n"))
 
 		err = box.UpdateMarkdown(ctx, title, markdownFile, content.Bytes())
 		if err != nil {
